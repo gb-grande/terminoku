@@ -1,10 +1,11 @@
 use std::io;
+mod sudoku;
 
 fn num_to_diff(num : i8) -> String {
     match num {
         0 => String::from("Easy"),
         1 => String::from("Medium"),
-        2 => String::from("Hard"),
+        2 => String::from("Hard"), 
         3 => String::from("Very Hard"),
         _ => String::from("Unknown")
     }
@@ -24,4 +25,8 @@ fn main() {
     }
     let cd = num_to_diff(difficulty);
     println!("Chosen difficulty is {cd}");
+    let b : sudoku::Board = Default::default();
+    println!("{:?}", b);
+
+    
 }
