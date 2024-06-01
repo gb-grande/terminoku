@@ -75,10 +75,21 @@ impl Board {
             }
         }
         return true;
-
-        
     }
+    
 
+
+    //calculates if it has 0, 1 or more solutions
+    pub fn num_solution (&self) -> i8 {
+        let total=0;
+
+    }
+    
+    fn solve_backtracking(b : &mut board, &sol_counter) {
+
+
+
+    }
 }
 
 
