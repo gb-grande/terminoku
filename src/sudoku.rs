@@ -1,9 +1,27 @@
+use rand::Rng;
 //Board definitiion
 #[derive(Clone, Copy, Debug)]
 pub struct Board {
    num_matrix : [[i32; 9]; 9],
    num_filled : i32
 }
+
+
+//shuffle numbers array
+//works by generating a random index to be the first element, then move forward
+fn shuffle_array(array : &mut [i32; 9]) {
+    for i in 0..9 {
+        let random_index = rand::thread_rng().gen_range(i..9);
+        //swap array elements
+        let temp = array[i];
+        array[i] = array[random_index];
+        array[random_index] = temp;
+    }
+
+}
+
+
+
 
 // defining implementation for board methods
 
@@ -107,7 +125,9 @@ impl Board {
                 if self.num_matrix[i][j] != 0 {
                     continue;
                 }
-                for num in 1..10 {
+                let mut numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+                shuffle_array(&mut numbers); 
+                for num in numbers {
                     if self.check_number(num, i, j) {
                         //update board to
                         self.insert_number(num, i, j);

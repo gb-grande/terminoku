@@ -1,4 +1,5 @@
 use std::io;
+
 mod sudoku;
 
 fn num_to_diff(num : i8) -> String {
@@ -25,9 +26,7 @@ fn main() {
     }
     let cd = num_to_diff(difficulty);
     println!("Chosen difficulty is {cd}");
-    let mut b : sudoku::Board = Default::default();
-    b.insert_number(1, 0, 0);
-    b.print();
+    let b : sudoku::Board = Default::default();
     let c;
     c = b.num_solutions();
     println!("{}", c);
