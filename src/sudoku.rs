@@ -1,7 +1,8 @@
 //Board definitiion
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Board {
-   num_matrix: [[i8; 9]; 9]
+   num_matrix : [[i32; 9]; 9],
+   num_filled : i32
 }
 
 // defining implementation for board methods
@@ -9,7 +10,8 @@ pub struct Board {
 impl Default for Board {
     fn default() -> Self {
         Self {
-            num_matrix : [[0; 9]; 9]
+            num_matrix : [[0; 9]; 9],
+            num_filled : 0
         }
     }
 }
@@ -33,7 +35,7 @@ impl Board {
         println!(" -----------------------");
         }
     // insert number in board if the slot isn't occupied, i and j are 0-indexed 
-    pub fn insert_number(&mut self, num : i8, cell_i : usize, cell_j : usize) -> bool {
+    pub fn insert_number(&mut self, num : i32, cell_i : usize, cell_j : usize) -> bool {
         if num < 1 || num > 9 {
             return false;
         }
@@ -42,10 +44,20 @@ impl Board {
             return false;
         }
         self.num_matrix[cell_i][cell_j] = num;
+        self.num_filled += 1;
         return true;
     }
+    // remove filled number from cell
+    pub fn remove_number(&mut self, cell_i : usize, cell_j : usize){
+        if self.num_matrix[cell_i][cell_j] != 0 {
+            self.num_matrix[cell_i][cell_j] = 0;
+            self.num_filled -= 1;
+        }
+
+    }
+
     //checks if it's possible to insert number in certain slot
-    pub fn check_number (&self, num : i8, cell_i : usize, cell_j : usize) -> bool {
+    pub fn check_number (&self, num : i32, cell_i : usize, cell_j : usize) -> bool {
         if num < 1 || num > 9 {
             return false;
         }
@@ -77,18 +89,46 @@ impl Board {
         return true;
     }
     
+    
+    unsafe fn solve_backtracking(&mut self, sol_counter : &mut i32) {
+        //if bord is filled -> increment solution numbers
+        if self.num_filled == 81 {
+            *sol_counter += 1;
+            self.print();
+            return;
+        }
+        // it has already found out there is no unique solution
+        if *sol_counter > 1 {
+            return;
+        }
+        //loop through all cells and check if it's possible to fill with numbers
+        for i in 0..9 {
+            for j in 0..9 {
+                if self.num_matrix[i][j] != 0 {
+                    continue;
+                }
+                for num in 1..10 {
+                    if self.check_number(num, i, j) {
+                        //update board to
+                        self.insert_number(num, i, j);
+                        self.solve_backtracking(sol_counter);
+                        self.remove_number(i, j)
 
+                    }
+                }
+                return;
+            }
+        }
+        return;
 
-    //calculates if it has 0, 1 or more solutions
-    pub fn num_solution (&self) -> i8 {
-        let total=0;
 
     }
-    
-    fn solve_backtracking(b : &mut board, &sol_counter) {
-
-
-
+    //calculates if it has 0, 1 or more solutions
+    pub unsafe fn num_solutions (&self) -> i32 {
+        let mut total=0;
+        let mut tempBoard = self.clone();
+        tempBoard.solve_backtracking(&mut total);
+        return total;
     }
 }
 

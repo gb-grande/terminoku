@@ -28,10 +28,8 @@ fn main() {
     let mut b : sudoku::Board = Default::default();
     b.insert_number(1, 0, 0);
     b.print();
-    let i1 = b.check_number(1, 8, 0);
-    let i2 = b.check_number(1, 0, 8);
-    let i3 = b.check_number(1, 1, 1);
-    let i4 = b.check_number(2, 1, 1);
-    println!("{i1} {i2} {i3} {i4}");
+    let mut c;
+    unsafe {c = b.num_solutions();}
+    println!("{}", c);
     
 }
