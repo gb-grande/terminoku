@@ -90,7 +90,7 @@ impl Board {
     }
     
     
-    unsafe fn solve_backtracking(&mut self, sol_counter : &mut i32) {
+    fn solve_backtracking(&mut self, sol_counter : &mut i32) {
         //if bord is filled -> increment solution numbers
         if self.num_filled == 81 {
             *sol_counter += 1;
@@ -119,15 +119,14 @@ impl Board {
                 return;
             }
         }
-        return;
 
 
     }
     //calculates if it has 0, 1 or more solutions
-    pub unsafe fn num_solutions (&self) -> i32 {
+    pub fn num_solutions (&self) -> i32 {
         let mut total=0;
-        let mut tempBoard = self.clone();
-        tempBoard.solve_backtracking(&mut total);
+        let mut temp_board = self.clone();
+        temp_board.solve_backtracking(&mut total);
         return total;
     }
 }

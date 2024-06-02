@@ -28,8 +28,8 @@ fn main() {
     let mut b : sudoku::Board = Default::default();
     b.insert_number(1, 0, 0);
     b.print();
-    let mut c;
-    unsafe {c = b.num_solutions();}
+    let c;
+    c = b.num_solutions();
     println!("{}", c);
     
 }
