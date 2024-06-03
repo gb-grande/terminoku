@@ -9,9 +9,11 @@ pub struct Board {
 
 //shuffle numbers array
 //works by generating a random index to be the first element, then move forward
-fn shuffle_array(array : &mut [i32; 9]) {
-    for i in 0..9 {
-        let random_index = rand::thread_rng().gen_range(i..9);
+
+fn shuffle_array<T: Copy>(array : &mut [T]) {
+    let size = array.len();
+    for i in 0..size {
+        let random_index = rand::thread_rng().gen_range(i..size);
         //swap array elements
         let temp = array[i];
         array[i] = array[random_index];
@@ -108,11 +110,18 @@ impl Board {
     }
     
     
-    fn solve_backtracking(&mut self, sol_counter : &mut i32) {
+    fn solve_backtracking(&mut self, sol_counter : &mut i32, board_ref : &mut Option<&mut Board>) {
         //if bord is filled -> increment solution numbers
         if self.num_filled == 81 {
+            //assign first solution to board passed as reference
+            if *sol_counter == 0 {
+                let opt = board_ref;
+                match opt {
+                    Some(reference) => **reference = self.clone(),
+                    None => (),
+                }
+            }
             *sol_counter += 1;
-            self.print();
             return;
         }
         // it has already found out there is no unique solution
@@ -131,7 +140,7 @@ impl Board {
                     if self.check_number(num, i, j) {
                         //update board to
                         self.insert_number(num, i, j);
-                        self.solve_backtracking(sol_counter);
+                        self.solve_backtracking(sol_counter, board_ref);
                         self.remove_number(i, j)
 
                     }
@@ -142,11 +151,11 @@ impl Board {
 
 
     }
-    //calculates if it has 0, 1 or more solutions
-    pub fn num_solutions (&self) -> i32 {
+    //calculates if it has 0, 1 or more solutions and copys one solution to a reference if specified
+    pub fn solutions(&self, board_ref : &mut Option<&mut Board>) -> i32 {
         let mut total=0;
         let mut temp_board = self.clone();
-        temp_board.solve_backtracking(&mut total);
+        temp_board.solve_backtracking(&mut total, board_ref);
         return total;
     }
 }

@@ -27,8 +27,10 @@ fn main() {
     let cd = num_to_diff(difficulty);
     println!("Chosen difficulty is {cd}");
     let b : sudoku::Board = Default::default();
-    let c;
-    c = b.num_solutions();
+    let mut b1: sudoku::Board = Default::default();
+
+    let c = b.solutions(&mut Some(&mut b1));
     println!("{}", c);
+    b1.print();
     
 }
