@@ -9,7 +9,7 @@ pub struct Board {
 
 //shuffle numbers array
 //works by generating a random index to be the first element, then move forward
-
+//
 fn shuffle_array<T: Copy>(array : &mut [T]) {
     let size = array.len();
     for i in 0..size {
@@ -37,7 +37,43 @@ impl Default for Board {
 }
 
 impl Board {
-    pub fn print (&self) {
+    pub fn new_empty() -> Self {
+        Self {
+            num_matrix : [[0; 9]; 9],
+            num_filled : 0
+        }
+    }
+
+    //generate a new board specifying the number of empty cells
+    pub fn generate(num_empty: i32) -> Self {
+        let mut returnable_board = Self::new_empty();
+        //generate a solution for a empty board
+        Self::new_empty().solutions(&mut Some(&mut returnable_board));
+        let mut random_cells_order : Vec<usize> = (0..81).collect();
+        shuffle_array(&mut random_cells_order);
+        let mut empty_cells = 0;
+        for n in random_cells_order {
+            if empty_cells == num_empty {
+                break;
+            }
+            let cell_i : usize = n/9;
+            let cell_j: usize = n%9;
+            let current_number = returnable_board.num_matrix[cell_i][cell_j];
+            returnable_board.remove_number(cell_i, cell_j);
+            if returnable_board.solutions(&mut None) == 1 {
+                empty_cells+=1;
+            }
+            else {
+                returnable_board.insert_number(current_number, cell_i, cell_j);
+            }
+        }
+        returnable_board
+
+    }
+
+
+
+    pub fn print(&self) {
         println!(" -----------------------");
         for i in 0..9 {
             print!("|");
