@@ -112,7 +112,7 @@ impl Board {
         }
         println!(" -----------------------");
         }
-        
+    //propagates a new number in a cell's changes to candidates across the board    
     pub fn update_candidates(&mut self, cell_i : usize, cell_j : usize){
         if self.num_matrix[cell_i][cell_j] == 0 {
             return;
@@ -136,7 +136,18 @@ impl Board {
         }
         return;
     }
-    
+    pub fn rebuild_all_candidates(&mut self){
+        self.candidates = [[(bitarr!(u8, Msb0; 1; 9)); 9]; 9];
+        for i in 0..9{
+            for j in 0..9 {
+                self.update_candidates(i, j);
+            }
+        }
+
+
+    }    
+
+
     // insert number in board if the slot isn't occupied, i and j are 0-indexed 
     pub fn insert_number(&mut self, num : i32, cell_i : usize, cell_j : usize) -> bool {
         if num < 1 || num > 9 {
@@ -159,26 +170,8 @@ impl Board {
             self.num_matrix[cell_i][cell_j] = 0;
             self.num_filled -= 1;
         }
-        //make all candidates possible for the cell then update later
-        self.candidates[cell_i][cell_j] = bitarr!(u8, Msb0; 1; 9);
-        //rebuilds candidates for the line, row and column
-        //line
-        for j in 0..9 {
-            self.update_candidates(cell_i,j);
-        }
-        //updates column
-        for i in 0..9 {
-            self.update_candidates(i,cell_j);
-        }
-        //updates block
-        let block_i_start = (cell_i / 3) * 3;
-        let block_j_start = (cell_j / 3) * 3;
-        for i in block_i_start..(block_i_start+3){
-            for j in block_j_start..(block_j_start+3){
-                self.update_candidates(i,j);
-            }
-        }
-        
+        //must rebuild all
+        self.rebuild_all_candidates();
 
     }
 

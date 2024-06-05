@@ -1,5 +1,5 @@
 use std::io;
-use bitvec::prelude::*;
+
 mod sudoku;
 
 fn num_to_diff(num : i8) -> String {
@@ -17,7 +17,7 @@ fn main() {
     println!("Please choose a difficulty");
     let mut difficulty : i8 = -1;
     let mut diff_input = String::new();
-  /*  while difficulty < 0 || difficulty > 3  {
+    while difficulty < 0 || difficulty > 3  {
         println!("0 - Easy\n1 - Medium\n2 - Hard\n3 - Very Hard");
         io::stdin()
             .read_line(&mut diff_input)
@@ -26,8 +26,7 @@ fn main() {
     }
     let cd = num_to_diff(difficulty);
     println!("Chosen difficulty is {cd}");
-    */
     let b : sudoku::Board = sudoku::Board::generate(60);
     b.print();
-    println!("{}", b.solutions(&mut None, false));
+    
 }
