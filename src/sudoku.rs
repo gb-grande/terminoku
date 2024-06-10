@@ -1,15 +1,18 @@
 use std::time::SystemTime;
 
-use bitvec::prelude::*;
 use rand::Rng;
 //Board definitiion
 #[derive(Clone, Copy, Debug)]
 pub struct Board {
    num_matrix : [[i32; 9]; 9],
    num_filled : i32,
-   candidates : [[BitArr!(for 9, in u8, Msb0); 9]; 9] 
+   rows : [i16; 9],
+   columns : [i16; 9],
+   boxes : [i16; 9],
+   empty_cells : Vec<(i32, i32)>
 }
 
+const FILLED : i16 = 0b111111111;
 
 //shuffle numbers array
 //works by generating a random index to be the first element, then move forward
@@ -36,7 +39,10 @@ impl Default for Board {
         Self {
             num_matrix : [[0; 9]; 9],
             num_filled : 0,
-            candidates : [[(bitarr!(u8, Msb0; 1; 9)); 9]; 9]
+            rows : [FILLED; 9],
+            columns : [FILLED; 9],
+            boxes : [FILLED; 9],
+            empty_cells : Vec::new()
         }
     }
 }
@@ -46,7 +52,10 @@ impl Board {
         Self {
             num_matrix : [[0; 9]; 9],
             num_filled : 0,
-            candidates : [[(bitarr!(u8, Msb0; 1; 9)); 9]; 9]
+            rows : [FILLED; 9],
+            columns : [FILLED; 9],
+            boxes : [FILLED; 9],
+            empty_cells : Vec::new()
         }
     }
 
@@ -112,43 +121,35 @@ impl Board {
         }
         println!(" -----------------------");
         }
-    //propagates a new number in a cell's changes to candidates across the board    
-    pub fn update_candidates(&mut self, cell_i : usize, cell_j : usize){
-        if self.num_matrix[cell_i][cell_j] == 0 {
-            return;
-        }
-        let num = self.num_matrix[cell_i][cell_j];
+    fn get_box_i(&self, cell_i : usize, cell_j : usize) -> usize{
+        return 3*cell_i + cell_j;
 
-        for j in 0..9 {
-            self.candidates[cell_i][j].set((num - 1) as usize, false);
-        }
-        //check column
-        for i in 0..9 {
-            self.candidates[i][cell_j].set((num - 1) as usize, false);
-        }
-        //check block 
-        let block_i_start = (cell_i / 3) * 3;
-        let block_j_start = (cell_j / 3) * 3;
-        for i in block_i_start..(block_i_start+3){
-            for j in block_j_start..(block_j_start+3){
-                self.candidates[i][j].set((num - 1) as usize, false);
-            }
-        }
-        return;
     }
-    pub fn rebuild_all_candidates(&mut self){
-        self.candidates = [[(bitarr!(u8, Msb0; 1; 9)); 9]; 9];
+
+    fn get_candidates(&self, cell_i : usize, cell_j : usize) -> Vec<i16>{
+        let combined = self.rows[cell_i] & self.columns[cell_j] & self.boxes[self.get_box_i(cell_i, cell_j)];
+        let mut candidates = Vec::new();
         for i in 0..9{
-            for j in 0..9 {
-                self.update_candidates(i, j);
+            if ((1 << i as i16) & combined) > 0{
+                candidates.push(i+1);
             }
+        return candidates;
+
+    }
+
+    fn get_number_of_candidates(&self, cell_i : usize, cell_j : usize ) -> i16{
+        let combined = self.rows[cell_i] & self.columns[cell_j] & self.boxes[self.get_box_i(cell_i, cell_j)];
+        let mut total :i16 = 0;
+        for i in 0..9{
+            if ((1 << i as i16) & combined) > 0{
+                total+=1;
+            }
+
         }
+        total
+    }
 
-
-    }    
-
-
-    // insert number in board if the slot isn't occupied, i and j are 0-indexed 
+    // insert number in board if the slot isn't occupied, i and j are 0-indexed, must remove empty cell
     pub fn insert_number(&mut self, num : i32, cell_i : usize, cell_j : usize) -> bool {
         if num < 1 || num > 9 {
             return false;
@@ -160,37 +161,24 @@ impl Board {
         self.num_matrix[cell_i][cell_j] = num;
         self.num_filled += 1;
         //update candidates
-        self.update_candidates(cell_i, cell_j);
+        self.rows[cell_i] ^= 1<<(num - 1);
+        self.columns[cell_j] ^= 1<<(num - 1);
+        let box_i = self.get_box_i(cell_i, cell_j);
+        self.boxes[box_i] ^= 1 << (num - 1);
         return true;
     }
     // remove filled number from cell and update candidates
     pub fn remove_number(&mut self, cell_i : usize, cell_j : usize){
-        //updating num_matrix
-        if self.num_matrix[cell_i][cell_j] != 0 {
-            self.num_matrix[cell_i][cell_j] = 0;
-            self.num_filled -= 1;
-        }
-        //must rebuild all
-        self.rebuild_all_candidates();
+        //set candidates
+        let num = self.num_matrix[cell_i][cell_j];
+        self.rows[cell_i] |= 1<<(num - 1);
+        self.columns[cell_j] |= 1<<(num - 1);
+        let box_i = self.get_box_i(cell_i, cell_j);
+        self.boxes[box_i] |= 1<<(num - 1);
+        self.empty_cells.push((cell_i as i32, cell_j as i32));
 
     }
 
-    //checks if it's possible to insert number in certain slot
-    pub fn check_number (&self, num : i32, cell_i : usize, cell_j : usize) -> bool {
-        if num < 1 || num > 9 {
-            return false;
-        }
-        if self.num_matrix[cell_i][cell_j] != 0 {
-            return false;
-        }
-        let is_possible = self.candidates[cell_i][cell_j].get((num - 1) as usize);
-        match is_possible {
-            Some(x) => return *x,
-            None => return false
-
-        }
-    }
-    
     //basic checks in order to not remove cells that would leave empty rows, columns or blocks
     fn is_removable(&self, cell_i : usize, cell_j : usize) -> bool{
         //checks column
@@ -241,7 +229,7 @@ impl Board {
         true
     }
     
-    fn solve_backtracking(&self, sol_counter : &mut i32, board_ref : &mut Option<&mut Board>, is_generating: bool) {
+    fn solve_backtracking(&mut self , sol_counter : &mut i32, board_ref : &mut Option<&mut Board>, is_generating: bool) {
         //if bord is filled -> increment solution numbers
         if self.num_filled == 81 {
             //assign first solution to board passed as reference
@@ -259,29 +247,19 @@ impl Board {
         if *sol_counter > 1 {
             return;
         }
-        //loop through all cells and check if it's possible to fill with numbers
-        for i in 0..9 {
-            for j in 0..9 {
-                if self.num_matrix[i][j] != 0 {
-                    continue;
-                }
-                let mut numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-                //only shuffles if trying to generate puzzle
-                if is_generating {
-                    shuffle_array(&mut numbers);
-                }
-                for num in numbers {
-                    if self.check_number(num, i, j) {
-                        //clone board and insert number
-                        let mut updated_board = self.clone();
-                        updated_board.insert_number(num, i, j);
-                        updated_board.solve_backtracking(sol_counter, board_ref, is_generating);
-
-                    }
-                }
-                return;
+        //loop through empty cells
+        let mut most_suitable : (i32, i32);
+        let mut most_suitable_c_number = 10;
+        let mut most_suitable_c_index = -1;
+        for (i, c) in &self.empty_cells.enumerate() {
+            let curr = self.get_number_of_candidates(c.0 as usize, c.1 as usize);
+            if curr < most_suitable_c_number {
+                most_suitable = *c;
+                most_suitable_c_number = curr;
+                most_suitable_c_index = i;
             }
         }
+
 
 
     }
