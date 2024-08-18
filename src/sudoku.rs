@@ -52,11 +52,15 @@ impl Board {
     }
 
     //generate a new board specifying the number of empty cells
-    pub fn generate(num_empty: i32) -> Self {
+    pub fn generate(num_empty: i32, solved_ref : Option<&mut Board>) -> Self {
         let now = SystemTime::now();
         let mut returnable_board = Self::new_empty();
         //generate a solution for a empty board
         Self::new_empty().solutions(&mut Some(&mut returnable_board), true);
+        match solved_ref {
+            Some(solved) => {*solved = returnable_board.clone()}
+            None => ()
+        }
         let mut random_cells_order : Vec<usize> = (0..81).collect();
         shuffle_array(&mut random_cells_order);
         let mut empty_cells = 0;
@@ -143,7 +147,7 @@ impl Board {
         total
     }
 
-    // insert number in board if the slot isn't occupied, i and j are 0-indexed, must remove empty cell
+    // insert number in board if the slot isn't occupied, thorugh the empty cell
     pub fn insert_number(&mut self, num : i32, empty_cell_index : usize) -> bool {
         if num < 1 || num > 9 {
             panic!("Number isn't between 1 and 9");
@@ -180,7 +184,18 @@ impl Board {
         self.num_filled-=1;
 
     }
+    pub fn enter_number(&mut self, i : i32, j : i32, num: i32){
+        //must find empty cell
+        let mut empty_cell_index = 0;
+        for (index, cell) in self.empty_cells.iter().enumerate() {
+            if i == cell.0 && j == cell.1 {
+                empty_cell_index = index;
+                break;
+            }
 
+        }
+        self.insert_number(num, empty_cell_index);
+    }
     //basic checks in order to not remove cells that would leave empty rows, columns or blocks
     fn is_removable(&self, cell_i : usize, cell_j : usize) -> bool{
         //checks column
@@ -290,6 +305,15 @@ impl Board {
         to_be_solved.solve_backtracking(&mut total, board_ref, is_generating);
         return total;
     }
+
+    pub fn get_num(&self, i : i32, j : i32) -> i32{
+        self.num_matrix[i as usize][j as usize]
+
+    }
+    pub fn is_solved(&self) -> bool {
+        self.empty_cells.len() == 0
+    }
+
 }
 
 
