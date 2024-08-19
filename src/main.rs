@@ -41,10 +41,11 @@ fn main() {
         io::stdin()
             .read_line(&mut input_line)
             .expect("Failed to read input");
-        println!()
+        println!();
         let input_splitted: Vec<&str> = input_line.split_whitespace().collect();
         if input_splitted.len() != 3 {
             println!("Please insert 3 terms.");
+            continue 'outer;
         }
         let mut parsed : Vec<i32> = vec![];
         for s in input_splitted {
@@ -79,6 +80,7 @@ fn main() {
             continue;
         }
         game_board.enter_number(true_i, true_j, num);
+        println!("Correct!")
     }
     println!("Well done!")
 }
